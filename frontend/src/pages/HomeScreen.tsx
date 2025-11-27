@@ -6,7 +6,11 @@ type ActionCard = {
   id: "book" | "promo" | "refer";
   title: string;
   subtitle: string;
-  primary?: boolean; // опциональное поле
+  primary?: boolean;
+};
+
+type HomeScreenProps = {
+  goToBarbers?: () => void; // проп от App.tsx
 };
 
 const actions: ActionCard[] = [
@@ -28,19 +32,22 @@ const actions: ActionCard[] = [
   },
 ];
 
-export const HomeScreen: React.FC = () => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ goToBarbers }) => {
   const { user } = useTelegram();
 
   const handleActionClick = (action: ActionCard) => {
-    // пока что просто логируем — потом сюда добавим реальный функционал
     console.log("Action click:", action.id);
-    // например:
-    // if (action.id === "book") навигация на экран записи
+
+    if (action.id === "book" && goToBarbers) {
+      // жмём "Записаться сейчас" → переключаемся на экран мастеров
+      goToBarbers();
+    }
+
+    // остальные действия (promo, refer) потом тоже сюда добавим
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center">
-      {/* Контейнер по центру как мобильный экран */}
       <div className="w-full max-w-md px-4 pt-10 pb-6">
         {/* Шапка */}
         <header className="flex items-center justify-between mb-10">
@@ -69,7 +76,7 @@ export const HomeScreen: React.FC = () => {
           </button>
         </header>
 
-        {/* Верхние action-кнопки */}
+        {/* Верхние action-карточки */}
         <section className="mb-8">
           <div className="grid grid-cols-3 gap-2 text-xs">
             {actions.map((action) => (
