@@ -10,7 +10,7 @@ type ActionCard = {
 };
 
 type HomeScreenProps = {
-  goToBarbers?: () => void; // проп от App.tsx
+  goToBarbers?: () => void;
 };
 
 const actions: ActionCard[] = [
@@ -23,7 +23,7 @@ const actions: ActionCard[] = [
   {
     id: "promo",
     title: "Акции и скидки",
-    subtitle: "Спецпредложения PANICA",
+    subtitle: "Спецпредложения PANIKA",
   },
   {
     id: "refer",
@@ -39,43 +39,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ goToBarbers }) => {
     console.log("Action click:", action.id);
 
     if (action.id === "book" && goToBarbers) {
-      // жмём "Записаться сейчас" → переключаемся на экран мастеров
       goToBarbers();
     }
-
-    // остальные действия (promo, refer) потом тоже сюда добавим
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center">
-      <div className="w-full max-w-md px-4 pt-10 pb-6">
-        {/* Шапка */}
-        <header className="flex items-center justify-between mb-10">
-          <div className="flex-1" />
-
-          <div className="text-center">
-            <div className="text-xs tracking-[0.25em] text-neutral-400">
-              BARBERSHOP
-            </div>
-            <div className="mt-1 text-2xl font-semibold tracking-[0.35em]">
-              PANICA
-            </div>
-            {user && (
-              <div className="mt-2 text-xs text-neutral-500">
-                {user.first_name}
-                {user.last_name ? ` ${user.last_name}` : ""} · @{user.username}
-              </div>
-            )}
-          </div>
-
-          <button
-            className="flex-1 flex justify-end text-xl"
-            aria-label="Уведомления"
-          >
-            <span>🔔</span>
-          </button>
-        </header>
-
+      {/* pt-24 чтобы контент отъехал вниз от шапки Layout */}
+      <div className="w-full max-w-md px-4 pt-24 pb-6">
         {/* Верхние action-карточки */}
         <section className="mb-8">
           <div className="grid grid-cols-3 gap-2 text-xs">
@@ -127,18 +98,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ goToBarbers }) => {
           </div>
         </section>
 
-        {/* Блок с QR-кодом PANICA */}
+        {/* Блок с QR-кодом PANIKA */}
         <section className="mb-4">
           <div className="rounded-3xl bg-black/10 px-1 py-2">
             <div className="flex justify-between items-start gap-4">
               <div className="text-xs">
-                <div className="font-semibold mb-1">Твой QR PANICA</div>
+                <div className="font-semibold mb-1">Твой QR PANIKA</div>
                 <p className="text-[11px] text-neutral-400">
                   Покажи код на ресепшене, чтобы начислить бонусы.
                 </p>
                 <p className="mt-2 text-[11px] text-neutral-300">
                   Баланс: <b>350 бонусов</b> · уровень <b>basic</b>
                 </p>
+                {user && (
+                  <p className="mt-1 text-[10px] text-neutral-500">
+                    Аккаунт Telegram: @{user.username}
+                  </p>
+                )}
               </div>
 
               <button className="rounded-2xl border border-neutral-700 px-3 py-2 text-[11px] font-medium">
