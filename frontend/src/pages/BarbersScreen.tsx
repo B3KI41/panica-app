@@ -5,11 +5,11 @@ import { useTelegram } from "../context/TelegramContext";
 type Barber = {
   id: string;
   name: string;
-  level: string;
-  experience: string;
-  about: string;
-  tags: string[];
+  role: string;
   nextSlotLabel: string;
+  description: string;
+  tags: string[];
+  avatar: string;
   bookingUrl: string;
 };
 
@@ -17,115 +17,121 @@ const barbers: Barber[] = [
   {
     id: "ashot",
     name: "Ашот",
-    level: "Топ-барбер",
-    experience: "5 лет опыта",
-    about: "Специализируется на фейдах, аккуратной бороде и классике.",
-    tags: ["Фейд", "Коррекция бороды", "Бритьё опаской"],
+    role: "Топ-барбер · 5 лет опыта",
     nextSlotLabel: "Сегодня · 18:30",
+    description:
+      "Специализируется на фейдах, аккуратной бороде и аккуратной классике.",
+    tags: ["Фейд", "Коррекция бороды", "Бритьё опаской"],
+    avatar: "/images/barbers/ashot.jpg",
     bookingUrl:
       "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4616199&ll=38.439989%2C55.855452&z=16",
   },
   {
     id: "ali",
     name: "Али",
-    level: "Барбер",
-    experience: "3 года опыта",
-    about: "Чёткие линии, укладки и современные мужские стрижки.",
-    tags: ["Классика", "Укладка", "Борода"],
+    role: "Барбер · 3 года опыта",
     nextSlotLabel: "Сегодня · 20:00",
+    description:
+      "Чёткие линии, укладки и современные мужские стрижки.",
+    tags: ["Классика", "Укладка", "Борода"],
+    avatar: "/images/barbers/ali.jpg",
     bookingUrl:
       "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4631127&ll=38.439989%2C55.855452&z=16",
   },
 ];
 
-const BarbersScreen: React.FC = () => {
-  const { tg } = useTelegram();
+export const BarbersScreen: React.FC = () => {
+  const { webApp } = useTelegram(); // берём WebApp из контекста
 
-  const handleBook = (url: string) => {
-    if (!url) return;
-
-    // Нормальный путь для Telegram WebApp
-    if (tg && typeof tg.openLink === "function") {
-      tg.openLink(url);
+  const handleBookClick = (barber: Barber) => {
+    // если мини-апп запущено в Telegram — открываем ссылку через Telegram
+    if (webApp && typeof webApp.openLink === "function") {
+      webApp.openLink(barber.bookingUrl);
     } else {
-      // Фоллбэк, если вдруг открыто просто в браузере
-      window.open(url, "_blank");
+      // запасной вариант для браузера
+      window.open(barber.bookingUrl, "_blank");
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center">
-      <div className="w-full max-w-md px-4 pt-24 pb-6">
-        {/* Заголовок блока */}
-        <section className="mb-4">
-          <h1 className="text-xl font-semibold mb-1">Мастера PANIKA</h1>
-          <p className="text-sm text-neutral-400">
-            Выбери своего барбера и запишись онлайн. Запись открывается в
-            Яндекс.Картах.
-          </p>
-        </section>
+    <div className="space-y-6">
+      {/* Заголовок и описание */}
+      <section className="mt-4">
+        <h1 className="text-2xl font-semibold">Мастера PANIKA</h1>
+        <p className="mt-2 text-sm text-neutral-400">
+          Выбери своего барбера и запишись онлайн.
+          Запись открывается в&nbsp;Яндекс.Картах.
+        </p>
+      </section>
 
-        {/* Список карточек барберов */}
-        <section className="space-y-4">
-          {barbers.map((barber) => (
-            <div
-              key={barber.id}
-              className="rounded-3xl bg-neutral-900/90 px-4 py-4 flex flex-col gap-3 shadow-lg shadow-black/40"
-            >
-              {/* Верхняя часть: аватар + имя + ближайшая запись */}
-              <div className="flex gap-3">
-                {/* Аватар-заглушка, потом можно заменить фото */}
-                <div className="w-12 h-12 rounded-full bg-neutral-800" />
-
-                <div className="flex-1">
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {barber.name}
-                      </div>
-                      <div className="text-[11px] text-neutral-400">
-                        {barber.level} · {barber.experience}
-                      </div>
-                    </div>
-
-                    <div className="text-[11px] text-right text-neutral-400">
-                      ближайшая запись
-                      <div className="text-xs text-white font-semibold">
-                        {barber.nextSlotLabel}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-xs text-neutral-300">
-                    {barber.about}
-                  </p>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {barber.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 rounded-full bg-neutral-800 text-[11px] text-neutral-200"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+      {/* Карточки барберов */}
+      <section className="space-y-4">
+        {barbers.map((barber) => (
+          <article
+            key={barber.id}
+            className="rounded-3xl bg-neutral-900/80 border border-neutral-800 px-4 py-4"
+          >
+            {/* Верхняя линия: аватар + имя/роль + ближайшая запись */}
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="h-12 w-12 rounded-full bg-neutral-800 overflow-hidden">
+                  <img
+                    src={barber.avatar}
+                    alt={barber.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               </div>
 
-              {/* Кнопка записи */}
-              <button
-                onClick={() => handleBook(barber.bookingUrl)}
-                className="w-full rounded-full bg-white text-black text-sm font-semibold py-2 mt-1 active:scale-[0.98] transition-transform"
-              >
-                Записаться
-              </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold truncate">
+                      {barber.name}
+                    </p>
+                    <p className="text-xs text-neutral-400 truncate">
+                      {barber.role}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] text-neutral-500">
+                      ближайшая запись
+                    </p>
+                    <p className="text-xs font-semibold">
+                      {barber.nextSlotLabel}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
-        </section>
-      </div>
+
+            {/* Описание */}
+            <p className="mt-3 text-sm text-neutral-200">
+              {barber.description}
+            </p>
+
+            {/* Теги услуг */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {barber.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full bg-neutral-800 px-3 py-1 text-xs text-neutral-200"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Кнопка записи */}
+            <button
+              onClick={() => handleBookClick(barber)}
+              className="mt-4 w-full rounded-full bg-white py-3 text-sm font-semibold text-black active:scale-[0.98] transition-transform"
+            >
+              Записаться
+            </button>
+          </article>
+        ))}
+      </section>
     </div>
   );
 };
-
-export default BarbersScreen;
