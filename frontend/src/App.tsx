@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layout } from './components/Layout';
 import { HomeScreen } from './pages/HomeScreen';
-import { BarbersScreen } from './pages/BarbersScreen';
+import BarbersScreen  from './pages/BarbersScreen';
 import ProfileScreen from "./pages/ProfileScreen";
 import type { TabId } from './theme';
 

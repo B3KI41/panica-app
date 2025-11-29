@@ -1,42 +1,47 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+// src/context/TelegramContext.tsx
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
-type TelegramUser = {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  username?: string;
-};
+declare global {
+  interface Window {
+    Telegram?: any;
+  }
+}
 
-type TelegramContextType = {
-  user: TelegramUser | null;
-  initData: string | null;
+export type TelegramContextType = {
+  tg: any; // Telegram WebApp объект
 };
 
 const TelegramContext = createContext<TelegramContextType>({
-  user: null,
-  initData: null,
+  tg: null,
 });
 
-export const useTelegram = () => useContext(TelegramContext);
+type TelegramProviderProps = {
+  children: ReactNode;
+};
 
-export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<TelegramUser | null>(null);
-  const [initData, setInitData] = useState<string | null>(null);
+export const TelegramProvider: React.FC<TelegramProviderProps> = ({
+  children,
+}) => {
+  const [tg, setTg] = useState<any>(null);
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
-    if (!tg) return;
-
-    tg.ready();
-    setInitData(tg.initData || null);
-    if (tg.initDataUnsafe?.user) {
-      setUser(tg.initDataUnsafe.user as TelegramUser);
+    if (typeof window !== "undefined") {
+      const webApp = window.Telegram?.WebApp ?? null;
+      setTg(webApp);
     }
   }, []);
 
   return (
-    <TelegramContext.Provider value={{ user, initData }}>
+    <TelegramContext.Provider value={{ tg }}>
       {children}
     </TelegramContext.Provider>
   );
 };
+
+export const useTelegram = () => useContext(TelegramContext);
