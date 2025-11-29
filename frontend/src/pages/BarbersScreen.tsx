@@ -7,7 +7,9 @@ type Barber = {
   name: string;
   level: string;
   experience: string;
+  about: string;
   tags: string[];
+  nextSlotLabel: string;
   bookingUrl: string;
 };
 
@@ -17,7 +19,9 @@ const barbers: Barber[] = [
     name: "Ашот",
     level: "Топ-барбер",
     experience: "5 лет опыта",
+    about: "Специализируется на фейдах, аккуратной бороде и классике.",
     tags: ["Фейд", "Коррекция бороды", "Бритьё опаской"],
+    nextSlotLabel: "Сегодня · 18:30",
     bookingUrl:
       "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4616199&ll=38.439989%2C55.855452&z=16",
   },
@@ -26,7 +30,9 @@ const barbers: Barber[] = [
     name: "Али",
     level: "Барбер",
     experience: "3 года опыта",
+    about: "Чёткие линии, укладки и современные мужские стрижки.",
     tags: ["Классика", "Укладка", "Борода"],
+    nextSlotLabel: "Сегодня · 20:00",
     bookingUrl:
       "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4631127&ll=38.439989%2C55.855452&z=16",
   },
@@ -42,7 +48,7 @@ const BarbersScreen: React.FC = () => {
     if (tg && typeof tg.openLink === "function") {
       tg.openLink(url);
     } else {
-      // Фоллбэк на обычный браузер
+      // Фоллбэк, если вдруг открыто просто в браузере
       window.open(url, "_blank");
     }
   };
@@ -50,26 +56,29 @@ const BarbersScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center">
       <div className="w-full max-w-md px-4 pt-24 pb-6">
-        {/* Заголовок */}
+        {/* Заголовок блока */}
         <section className="mb-4">
           <h1 className="text-xl font-semibold mb-1">Мастера PANIKA</h1>
           <p className="text-sm text-neutral-400">
-            Выбери своего барбера и запишись онлайн через Яндекс.
+            Выбери своего барбера и запишись онлайн. Запись открывается в
+            Яндекс.Картах.
           </p>
         </section>
 
-        {/* Список мастеров */}
+        {/* Список карточек барберов */}
         <section className="space-y-4">
           {barbers.map((barber) => (
             <div
               key={barber.id}
-              className="rounded-3xl bg-neutral-900/90 px-4 py-4 flex flex-col gap-3"
+              className="rounded-3xl bg-neutral-900/90 px-4 py-4 flex flex-col gap-3 shadow-lg shadow-black/40"
             >
+              {/* Верхняя часть: аватар + имя + ближайшая запись */}
               <div className="flex gap-3">
-                {/* Аватар-заглушка */}
+                {/* Аватар-заглушка, потом можно заменить фото */}
                 <div className="w-12 h-12 rounded-full bg-neutral-800" />
+
                 <div className="flex-1">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-start gap-2">
                     <div>
                       <div className="text-sm font-semibold">
                         {barber.name}
@@ -78,14 +87,18 @@ const BarbersScreen: React.FC = () => {
                         {barber.level} · {barber.experience}
                       </div>
                     </div>
-                    {/* Можно позже подставлять реальное ближайшее время */}
+
                     <div className="text-[11px] text-right text-neutral-400">
-                      запись через
+                      ближайшая запись
                       <div className="text-xs text-white font-semibold">
-                        Яндекс
+                        {barber.nextSlotLabel}
                       </div>
                     </div>
                   </div>
+
+                  <p className="mt-2 text-xs text-neutral-300">
+                    {barber.about}
+                  </p>
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {barber.tags.map((tag) => (
@@ -100,9 +113,10 @@ const BarbersScreen: React.FC = () => {
                 </div>
               </div>
 
+              {/* Кнопка записи */}
               <button
                 onClick={() => handleBook(barber.bookingUrl)}
-                className="w-full rounded-full bg-white text-black text-sm font-semibold py-2 mt-2"
+                className="w-full rounded-full bg-white text-black text-sm font-semibold py-2 mt-1 active:scale-[0.98] transition-transform"
               >
                 Записаться
               </button>
