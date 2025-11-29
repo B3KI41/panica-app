@@ -11,7 +11,7 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center">
-      <div className="w-full max-w-md px-4 pt-24 pb-6">
+      <div className="w-full max-w-md px-4 pt-6 pb-6">
         {/* Заголовок */}
         <section className="mb-6">
           <h1 className="text-xl font-semibold mb-1">Профиль</h1>

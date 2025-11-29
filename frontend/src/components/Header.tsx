@@ -11,9 +11,8 @@ export const Header: React.FC = () => {
         <div className="text-xs uppercase tracking-[0.35em] text-neutral-400">
           BARBERSHOP
         </div>
-        <div className="mt-2 text-3xl font-semibold tracking-[0.35em]">
-          PANIKA
-        </div>
+        <div className="text-[26px] font-medium tracking-[0.35em]">
+  PANIKA        </div>
         {user && (
           <div className="mt-2 text-xs text-neutral-500">
             {user.first_name || user.username}, рады видеть тебя 👋

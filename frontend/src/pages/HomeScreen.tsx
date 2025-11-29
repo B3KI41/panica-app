@@ -46,7 +46,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ goToBarbers }) => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center">
       {/* pt-24 чтобы контент отъехал вниз от шапки Layout */}
-      <div className="w-full max-w-md px-4 pt-24 pb-6">
+      <div className="w-full max-w-md px-4 pt-6 pb-6">
         {/* Верхние action-карточки */}
         <section className="mb-8">
           <div className="grid grid-cols-3 gap-2 text-xs">
