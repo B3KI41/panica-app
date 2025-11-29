@@ -45,7 +45,7 @@ export const BarbersScreen: React.FC = () => {
   return (
     <div className="space-y-5 pb-4">
       <div>
-        <h2 className="text-lg font-semibold">Мастера PANICA</h2>
+        <h2 className="text-lg font-semibold">Мастера PANIKA</h2>
         <p className="mt-1 text-sm text-neutral-400">
           Выбери своего барбера и запишись онлайн.
         </p>
