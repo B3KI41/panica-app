@@ -40,15 +40,15 @@ const barbers: Barber[] = [
   },
 ];
 
-export const BarbersScreen: React.FC = () => {
-  const { webApp } = useTelegram(); // берём WebApp из контекста
+const BarbersScreen: React.FC = () => {
+  const { tg } = useTelegram(); // берем tg из контекста
 
   const handleBookClick = (barber: Barber) => {
-    // если мини-апп запущено в Telegram — открываем ссылку через Telegram
-    if (webApp && typeof webApp.openLink === "function") {
-      webApp.openLink(barber.bookingUrl);
+    if (tg && typeof tg.openLink === "function") {
+      // мини-аппа в Telegram
+      tg.openLink(barber.bookingUrl);
     } else {
-      // запасной вариант для браузера
+      // запасной вариант в браузере
       window.open(barber.bookingUrl, "_blank");
     }
   };
@@ -135,3 +135,7 @@ export const BarbersScreen: React.FC = () => {
     </div>
   );
 };
+
+// чтобы и default-импорт, и именованный работали
+export default BarbersScreen;
+export { BarbersScreen };
