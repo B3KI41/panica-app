@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLoyalty } from "../context/LoyaltyContext";
 import { useTelegram } from "../context/TelegramContext";
+import { calculateLoyaltyForVisit } from "../loyalty/rules";
 
 const ProfileScreen = () => {
   const { loyalty, loading, error, updatePhone } = useLoyalty();
@@ -11,9 +12,14 @@ const ProfileScreen = () => {
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [phoneInput, setPhoneInput] = useState(loyalty?.phone ?? "");
 
+  // для симуляции чека
+  const [checkAmount, setCheckAmount] = useState<string>("2000");
+
   const displayName =
     loyalty?.name ||
-    (user?.first_name ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "Гость PANIKA");
+    (user?.first_name
+      ? `${user.first_name} ${user.last_name ?? ""}`.trim()
+      : "Гость PANIKA");
 
   const handleEditPhone = () => {
     setPhoneInput(loyalty?.phone ?? "");
@@ -58,6 +64,35 @@ const ProfileScreen = () => {
       </div>
     );
   }
+
+  // --- ЛОГИКА СИМУЛЯТОРА БОНУСОВ ---
+
+  const parsedAmount = Number(checkAmount.replace(/\s/g, ""));
+  const validAmount =
+    Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : 0;
+
+  const isFirstVisit =
+    loyalty.firstVisitCashbackAvailable && !loyalty.firstVisitCashbackUsed;
+
+  const hasReviewDiscount = loyalty.reviewBonusAvailable;
+
+  const rules = {
+    cashbackPercent: isFirstVisit ? 0.5 : 0.05,
+    maxWriteOffPercent: 0.2,
+  };
+
+  const calc =
+    validAmount > 0
+      ? calculateLoyaltyForVisit(
+          {
+            orderAmount: validAmount,
+            isFirstVisit,
+            hasReviewDiscount,
+            currentBonuses: loyalty.balance,
+          },
+          rules
+        )
+      : null;
 
   return (
     <div className="px-4 pt-6 pb-24 text-white space-y-4">
@@ -138,16 +173,17 @@ const ProfileScreen = () => {
           <span className="font-semibold lowercase">{loyalty.level}</span>
         </div>
         <div className="text-xs text-zinc-500">
-          С каждого визита начисляется 5% кешбэка. За первое посещение — 50%.
+          С каждого визита — 5% кешбэка. За первое посещение — 50%.
         </div>
 
         {/* бейджи статусов */}
         <div className="flex flex-wrap gap-2 mt-3">
-          {loyalty.firstVisitCashbackAvailable && !loyalty.firstVisitCashbackUsed && (
-            <span className="inline-flex items-center rounded-2xl bg-emerald-500/10 px-3 py-1 text-[11px] text-emerald-300">
-              50% кешбэк за первое посещение активен
-            </span>
-          )}
+          {loyalty.firstVisitCashbackAvailable &&
+            !loyalty.firstVisitCashbackUsed && (
+              <span className="inline-flex items-center rounded-2xl bg-emerald-500/10 px-3 py-1 text-[11px] text-emerald-300">
+                50% кешбэк за первое посещение активен
+              </span>
+            )}
 
           {loyalty.reviewBonusAvailable && (
             <span className="inline-flex items-center rounded-2xl bg-violet-500/10 px-3 py-1 text-[11px] text-violet-300">
@@ -161,6 +197,66 @@ const ProfileScreen = () => {
             </span>
           )}
         </div>
+      </div>
+
+      {/* Симулятор бонусов */}
+      <div className="bg-zinc-900 rounded-3xl px-4 py-4 space-y-3">
+        <div className="text-xs font-semibold text-zinc-200">
+          Пример расчёта для твоего чека
+        </div>
+        <p className="text-xs text-zinc-400">
+          Введи сумму чека, чтобы увидеть, сколько можно списать баллами и
+          какой кешбэк ты получишь.
+        </p>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            value={checkAmount}
+            onChange={(e) => setCheckAmount(e.target.value)}
+            className="w-28 rounded-2xl bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
+          />
+          <span className="text-sm text-zinc-300">₽</span>
+        </div>
+
+        {calc && validAmount > 0 ? (
+          <div className="mt-2 space-y-1 text-xs text-zinc-300">
+            <div>
+              Скидка за отзыв:{" "}
+              {hasReviewDiscount ? "20% от чека" : "нет (можно получить за отзыв)"}
+            </div>
+            <div>
+              Сумма после скидки:{" "}
+              <span className="font-semibold">
+                {Math.round(calc.priceAfterDiscount)} ₽
+              </span>
+            </div>
+            <div>
+              Максимум можно списать баллами:{" "}
+              <span className="font-semibold">
+                {Math.round(calc.maxBonusesToUse)} ₽
+              </span>
+            </div>
+            <div>
+              Оплата деньгами:{" "}
+              <span className="font-semibold">
+                {Math.round(calc.priceToPayMoney)} ₽
+              </span>
+            </div>
+            <div>
+              Кешбэк за визит:{" "}
+              <span className="font-semibold">
+                {Math.round(calc.cashbackAmount)} бонусов
+              </span>{" "}
+              ({isFirstVisit ? "50% за первое посещение" : "5% за визит"})
+            </div>
+          </div>
+        ) : (
+          <p className="text-[11px] text-zinc-500">
+            Введи сумму больше нуля, например <span className="font-semibold">2000</span>.
+          </p>
+        )}
       </div>
 
       {/* Ближайшая запись */}
@@ -202,7 +298,10 @@ const ProfileScreen = () => {
           <li>• Первое посещение — 50% кешбэка от суммы чека.</li>
           <li>• Каждое следующее посещение — 5% кешбэка.</li>
           <li>• За отзыв в 2ГИС или Яндекс.Картах — скидка 20% на следующий визит.</li>
-          <li>• Можно списывать до 20% чека бонусами, скидки и баллы можно совмещать.</li>
+          <li>
+            • Можно списывать до 20% чека бонусами. Скидки и баллы можно
+            совмещать.
+          </li>
         </ul>
       </div>
     </div>
