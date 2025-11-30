@@ -1,55 +1,70 @@
 // src/api/loyalty.ts
 
-import type { LoyaltyInfo as LoyaltyInfoType } from "../loyalty/types";
-import { fetchLoyaltyFromYclients } from "./yclients";
+export type LoyaltyLevel = "basic" | "silver" | "gold" | "vip";
 
-// Чтобы не ломать существующие импорты:
-export type LoyaltyInfo = LoyaltyInfoType;
+export interface NextRecordInfo {
+  datetime: string; // ISO-строка, например "2025-12-01T18:30:00+03:00"
+  masterName: string;
+  serviceName: string;
+}
 
-const USE_YCLIENTS = import.meta.env.VITE_YCLIENTS_ENABLED === "true";
+export interface LoyaltyInfo {
+  telegramId: string;
+  phone: string | null;
+  name: string;
+
+  level: LoyaltyLevel;
+  balance: number;
+
+  // бонусы и флаги
+  totalVisits: number;
+  firstVisitCashbackAvailable: boolean;
+  firstVisitCashbackUsed: boolean;
+  reviewBonusAvailable: boolean;
+  canUsePoints: boolean;
+
+  nextRecord: NextRecordInfo | null;
+}
 
 /**
- * Главная функция получения/создания клиента и его бонусного счёта.
- *
- * Сейчас:
- *  - если USE_YCLIENTS === true, пытаемся сходить в YCLIENTS (через заглушку);
- *  - если не настроено или упало — отдаём локальные мок-данные.
+ * ВРЕМЕННЫЙ mock-API.
+ * Потом здесь будет запрос на наш backend, который уже общается с YCLIENTS.
  */
 export async function fetchLoyalty(
   telegramId: string | null,
   phone: string | null
 ): Promise<LoyaltyInfo> {
-  // Попытка использовать YCLIENTS
-  if (USE_YCLIENTS) {
-    try {
-      const info = await fetchLoyaltyFromYclients({ telegramId, phone });
-      return info;
-    } catch (e) {
-      console.error("[LOYALTY] Ошибка при работе с YCLIENTS:", e);
-    }
-  }
+  const safeTelegramId = telegramId ?? "unknown";
 
-  // Фолбэк: локальные мок-данные
-  const clientId = telegramId || phone || "guest";
+  // Тут можешь подправить стартовые данные под реальные
+  return {
+    telegramId: safeTelegramId,
+    phone,
+    name: "Гость PANIKA",
 
-  const mock: LoyaltyInfo = {
-    client: {
-      clientId,
-      name: "Гость PANIKA",
-      phone: phone ?? undefined,
-      telegramId: telegramId ?? undefined,
-      yclientsId: undefined,
-    },
-    balance: {
-      bonuses: 350,
-      level: "basic",
-      cashbackPercent: 0.05,      // базовый кэшбек 5% после первого визита
-      maxWriteOffPercent: 0.2,    // можно списать до 20% чека
-      reviewDiscountPercent: 0,   // пока нет купона за отзыв
-      firstVisitCashbackAvailable: true,
-      reviewDiscountAvailable: false,
-    },
+    level: "basic",
+    balance: 350,
+
+    totalVisits: 1,
+    firstVisitCashbackAvailable: true, // первый визит уже прошёл, кешбэк 50% доступен
+    firstVisitCashbackUsed: false,
+    reviewBonusAvailable: false,
+    canUsePoints: true, // можно списывать до 20% баллами
+
+    nextRecord: null, // позже будем подтягивать из YCLIENTS
   };
+}
 
-  return mock;
+/**
+ * ВРЕМЕННЫЙ mock: «привязка телефона».
+ * Сейчас просто возвращает тот же профиль, но с телефоном.
+ * Потом здесь будет настоящий POST на backend.
+ */
+export async function linkPhone(
+  telegramId: string,
+  phone: string
+): Promise<LoyaltyInfo> {
+  // В реальности мы бы сохранили привязку и вернули обновлённый профиль.
+  // Здесь — просто вызываем fetchLoyalty с обновлённым телефоном.
+  return fetchLoyalty(telegramId, phone);
 }

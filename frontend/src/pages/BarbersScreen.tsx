@@ -24,7 +24,7 @@ const barbers: Barber[] = [
     tags: ["Фейд", "Коррекция бороды", "Бритьё опаской"],
     avatar: "/images/barbers/ashot.jpg",
     bookingUrl:
-      "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4616199&ll=38.439989%2C55.855452&z=16",
+      "https://n1788210.yclients.com/company/1589523/personal/select-services?o=m4616199",
   },
   {
     id: "ali",
@@ -36,7 +36,7 @@ const barbers: Barber[] = [
     tags: ["Классика", "Укладка", "Борода"],
     avatar: "/images/barbers/ali.jpg",
     bookingUrl:
-      "https://yandex.ru/maps/org/panika/177310884730/?booking%5Bpage%5D=services&booking%5Bpermalink%5D=177310884730&booking%5BresourceId%5D=4631127&ll=38.439989%2C55.855452&z=16",
+      "https://n1788210.yclients.com/company/1589523/personal/select-services?o=m4631127",
   },
 ];
 
