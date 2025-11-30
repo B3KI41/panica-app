@@ -1,133 +1,210 @@
 // src/pages/ProfileScreen.tsx
-import React, { useEffect, useState } from "react";
+
+import { useState } from "react";
 import { useLoyalty } from "../context/LoyaltyContext";
+import { useTelegram } from "../context/TelegramContext";
 
-const ProfileScreen: React.FC = () => {
-  const { loyalty, loading, phone, setPhone } = useLoyalty();
-  const [phoneInput, setPhoneInput] = useState(phone);
+const ProfileScreen = () => {
+  const { loyalty, loading, error, updatePhone } = useLoyalty();
+  const { user } = useTelegram();
 
-  // если телефон в контексте обновился (например, из API), подтягиваем в инпут
-  useEffect(() => {
-    setPhoneInput(phone);
-  }, [phone]);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput] = useState(loyalty?.phone ?? "");
 
-  if (loading || !loyalty) {
+  const displayName =
+    loyalty?.name ||
+    (user?.first_name ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "Гость PANIKA");
+
+  const handleEditPhone = () => {
+    setPhoneInput(loyalty?.phone ?? "");
+    setIsEditingPhone(true);
+  };
+
+  const handleSavePhone = async () => {
+    const value = phoneInput.trim();
+    if (!value) return;
+    await updatePhone(value);
+    setIsEditingPhone(false);
+  };
+
+  const handleCancelPhone = () => {
+    setIsEditingPhone(false);
+    setPhoneInput(loyalty?.phone ?? "");
+  };
+
+  if (loading && !loyalty) {
     return (
-      <div className="px-4 pt-10 pb-24 text-sm text-neutral-400">
-        Загружаем профиль…
+      <div className="px-4 pt-6 pb-24 text-white">
+        <p className="text-sm text-zinc-300">Загружаем профиль…</p>
       </div>
     );
   }
 
-  const { client, balance } = loyalty;
+  if (error) {
+    return (
+      <div className="px-4 pt-6 pb-24 text-white">
+        <p className="text-sm text-red-400 mb-2">{error}</p>
+        <p className="text-xs text-zinc-400">
+          Попробуй закрыть мини-приложение и открыть его снова.
+        </p>
+      </div>
+    );
+  }
 
-  const handleSavePhone = () => {
-    const trimmed = phoneInput.trim();
-    if (!trimmed) return;
-    setPhone(trimmed);
-    // позже сюда можно добавить tg.alert / notification
-  };
-
-  const firstVisitText = balance.firstVisitCashbackAvailable
-    ? "На первом посещении вернём 50% стоимости стрижки бонусами."
-    : "Первое посещение уже было — дальше действует кэшбэк 5% от каждого чека.";
-
-  const reviewText = balance.reviewDiscountAvailable
-    ? "На следующем визите действует скидка 20% за отзыв в 2ГИС или Яндекс.Картах."
-    : "Оставь отзыв в 2ГИС или Яндекс.Картах — и получишь скидку 20% на следующий визит.";
+  if (!loyalty) {
+    return (
+      <div className="px-4 pt-6 pb-24 text-white">
+        <p className="text-sm text-zinc-300">Профиль недоступен.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="pb-24">
+    <div className="px-4 pt-6 pb-24 text-white space-y-4">
       {/* Заголовок */}
-      <section className="mt-6 px-4">
-        <h1 className="text-2xl font-semibold">Профиль</h1>
-        <p className="mt-2 text-sm text-neutral-400">
-          Твой аккаунт в PANIKA barbershop.
+      <div>
+        <h1 className="text-2xl font-semibold mb-1">Профиль</h1>
+        <p className="text-sm text-zinc-400">
+          Твой аккаунт PANIKA и бонусная программа.
         </p>
-      </section>
+      </div>
 
-      <section className="mt-4 px-4 space-y-4">
-        {/* Карточка аккаунта */}
-        <div className="bg-panika-card rounded-3xl px-4 py-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-panika-chip" />
-          <div className="flex flex-col">
-            <span className="text-xs text-panika-subtle">Аккаунт PANIKA</span>
-            <span className="text-base font-semibold">
-              {client.name || "Гость PANIKA"}
-            </span>
-            {client.telegramId && (
-              <span className="text-[11px] text-panika-subtle">
-                Telegram ID: {client.telegramId}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Бонусный счёт */}
-        <div className="bg-panika-card rounded-3xl px-4 py-4 space-y-2">
-          <div className="flex justify-between items-baseline">
-            <div>
-              <p className="text-xs text-panika-subtle">Бонусный счёт</p>
-              <p className="text-2xl font-semibold">
-                {balance.bonuses.toLocaleString("ru-RU")} бонусов
-              </p>
+      {/* Карточка гостя */}
+      <div className="bg-zinc-900 rounded-3xl px-4 py-3 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-zinc-800" />
+        <div className="flex-1">
+          <div className="text-sm font-medium">{displayName}</div>
+          {loyalty.phone ? (
+            <div className="text-xs text-zinc-400 mt-0.5">
+              Телефон: {loyalty.phone}
             </div>
-            <div className="text-right">
-              <p className="text-xs text-panika-subtle">Уровень</p>
-              <p className="text-sm font-medium uppercase">
-                {balance.level}
-              </p>
+          ) : (
+            <div className="text-xs text-zinc-500 mt-0.5">
+              Телефон не привязан
             </div>
-          </div>
-
-          <p className="text-[11px] text-panika-subtle leading-snug">
-            {firstVisitText}
-          </p>
-          <p className="text-[11px] text-panika-subtle leading-snug">
-            Баллы можно использовать до 20% от суммы чека, а на оставшуюся
-            часть всё равно действует кэшбэк.
-          </p>
-          <p className="text-[11px] text-panika-subtle leading-snug">
-            {reviewText}
-          </p>
+          )}
         </div>
+        <button
+          onClick={handleEditPhone}
+          className="text-xs font-medium text-sky-400 hover:text-sky-300 active:text-sky-200"
+        >
+          {loyalty.phone ? "Изменить" : "Добавить"} телефон
+        </button>
+      </div>
 
-        {/* Телефон для бонусной программы */}
-        <div className="bg-panika-card rounded-3xl px-4 py-4 space-y-3">
-          <p className="text-xs text-panika-subtle">
-            Телефон для бонусной программы
+      {/* Форма телефона (инлайн) */}
+      {isEditingPhone && (
+        <div className="bg-zinc-900 rounded-3xl px-4 py-3 space-y-2">
+          <p className="text-xs text-zinc-300">
+            Введи номер телефона, который используешь при записи в барбершоп.
           </p>
-
           <div className="flex gap-2">
             <input
               type="tel"
-              placeholder="+7..."
+              placeholder="+7 999 123-45-67"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
-              className="flex-1 bg-panika-bg rounded-2xl px-3 py-2 text-sm outline-none border border-panika-border"
+              className="flex-1 rounded-2xl bg-zinc-950 border border-zinc-700 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
             />
+          </div>
+          <div className="flex gap-2 justify-end pt-1">
+            <button
+              onClick={handleCancelPhone}
+              className="px-3 py-1.5 rounded-2xl text-xs text-zinc-300 bg-zinc-800"
+            >
+              Отмена
+            </button>
             <button
               onClick={handleSavePhone}
-              className="px-4 py-2 rounded-2xl bg-white text-black text-sm font-medium active:scale-[0.98]"
+              className="px-3 py-1.5 rounded-2xl text-xs font-semibold bg-sky-500 text-black active:bg-sky-400"
             >
               Сохранить
             </button>
           </div>
+        </div>
+      )}
 
-          <p className="text-[11px] text-panika-subtle leading-snug">
-            Номер телефона помогает найти тебя в системе, даже если сменится
-            аккаунт Telegram. В будущем по нему можно будет восстановить бонусы.
-          </p>
+      {/* Бонусный счёт */}
+      <div className="bg-zinc-900 rounded-3xl px-4 py-4 space-y-2">
+        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+          Бонусный счёт
+        </div>
+        <div className="flex items-baseline gap-2">
+          <div className="text-3xl font-semibold">{loyalty.balance}</div>
+          <div className="text-xs text-zinc-400">бонусов</div>
+        </div>
+        <div className="text-xs text-zinc-400">
+          Уровень:{" "}
+          <span className="font-semibold lowercase">{loyalty.level}</span>
+        </div>
+        <div className="text-xs text-zinc-500">
+          С каждого визита начисляется 5% кешбэка. За первое посещение — 50%.
         </div>
 
-        {/* Заглушка под блок ближайшей записи (позже свяжем с YCLIENTS) */}
-        <div className="bg-panika-card rounded-3xl px-4 py-4 space-y-1">
-          <p className="text-xs text-panika-subtle">Ближайшая запись</p>
-          <p className="text-sm text-panika-subtle">
-            Пока записей нет. Запишись к мастеру на вкладке «Мастера».
-          </p>
+        {/* бейджи статусов */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {loyalty.firstVisitCashbackAvailable && !loyalty.firstVisitCashbackUsed && (
+            <span className="inline-flex items-center rounded-2xl bg-emerald-500/10 px-3 py-1 text-[11px] text-emerald-300">
+              50% кешбэк за первое посещение активен
+            </span>
+          )}
+
+          {loyalty.reviewBonusAvailable && (
+            <span className="inline-flex items-center rounded-2xl bg-violet-500/10 px-3 py-1 text-[11px] text-violet-300">
+              20% скидка за отзыв доступна
+            </span>
+          )}
+
+          {loyalty.canUsePoints && (
+            <span className="inline-flex items-center rounded-2xl bg-sky-500/10 px-3 py-1 text-[11px] text-sky-300">
+              Можно оплатить до 20% чека баллами
+            </span>
+          )}
         </div>
-      </section>
+      </div>
+
+      {/* Ближайшая запись */}
+      <div className="bg-zinc-900 rounded-3xl px-4 py-4 space-y-1">
+        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+          Ближайшая запись
+        </div>
+        {loyalty.nextRecord ? (
+          <>
+            <div className="text-sm text-zinc-200 font-medium">
+              {loyalty.nextRecord.masterName}
+            </div>
+            <div className="text-xs text-zinc-400">
+              {loyalty.nextRecord.serviceName}
+            </div>
+            <div className="text-sm text-zinc-200 mt-1">
+              {new Date(loyalty.nextRecord.datetime).toLocaleString("ru-RU", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-zinc-400">
+            Пока записей нет. Запишись к мастеру на вкладке{" "}
+            <span className="font-semibold">«Мастера»</span>.
+          </p>
+        )}
+      </div>
+
+      {/* Как работают бонусы (кратко) */}
+      <div className="bg-zinc-900 rounded-3xl px-4 py-4 space-y-1">
+        <div className="text-xs font-semibold text-zinc-200">
+          Как работает бонусная система
+        </div>
+        <ul className="text-xs text-zinc-400 space-y-1.5">
+          <li>• Первое посещение — 50% кешбэка от суммы чека.</li>
+          <li>• Каждое следующее посещение — 5% кешбэка.</li>
+          <li>• За отзыв в 2ГИС или Яндекс.Картах — скидка 20% на следующий визит.</li>
+          <li>• Можно списывать до 20% чека бонусами, скидки и баллы можно совмещать.</li>
+        </ul>
+      </div>
     </div>
   );
 };

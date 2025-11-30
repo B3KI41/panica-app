@@ -1,77 +1,89 @@
 // src/context/LoyaltyContext.tsx
-import React, {
+
+import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
   type ReactNode,
 } from "react";
-import type { LoyaltyInfo } from "../api/loyalty";
-import { fetchLoyalty } from "../api/loyalty";
+import { fetchLoyalty, linkPhone, type LoyaltyInfo } from "../api/loyalty";
 import { useTelegram } from "./TelegramContext";
 
 interface LoyaltyContextValue {
   loyalty: LoyaltyInfo | null;
   loading: boolean;
-  phone: string;
-  setPhone: (phone: string) => void;
+  error: string | null;
+
+  refresh: () => Promise<void>;
+  updatePhone: (phone: string) => Promise<void>;
 }
 
 const LoyaltyContext = createContext<LoyaltyContextValue | undefined>(
   undefined
 );
 
-export const LoyaltyProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const LoyaltyProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useTelegram();
   const [loyalty, setLoyalty] = useState<LoyaltyInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [phone, setPhoneState] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
+  const telegramId = user?.id ? String(user.id) : null;
 
+  const refresh = useCallback(async () => {
+    if (!telegramId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
       setLoading(true);
-      try {
-        // передаём telegramId, телефон пока null (потом добавим реальный)
-        const info = await fetchLoyalty(String(user.id), null);
-        setLoyalty(info);
+      const data = await fetchLoyalty(telegramId, null);
+      setLoyalty(data);
+      setError(null);
+    } catch (e) {
+      console.error("Failed to fetch loyalty", e);
+      setError("Не удалось загрузить профиль.");
+    } finally {
+      setLoading(false);
+    }
+  }, [telegramId]);
 
-        if (info.client.phone) {
-          setPhoneState(info.client.phone);
-        }
+  const updatePhone = useCallback(
+    async (phone: string) => {
+      if (!telegramId) return;
+
+      try {
+        setLoading(true);
+        const updated = await linkPhone(telegramId, phone);
+        setLoyalty(updated);
+        setError(null);
       } catch (e) {
-        console.error("[LoyaltyContext] Failed to fetch loyalty:", e);
+        console.error("Failed to update phone", e);
+        setError("Не удалось сохранить номер телефона.");
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [telegramId]
+  );
 
-    load();
-  }, [user?.id]);
-
-  const setPhone = (newPhone: string) => {
-    setPhoneState(newPhone);
-
-    // пока просто обновляем локально;
-    // позже добавим запрос в backend/YCLIENTS для сохранения
-    setLoyalty((prev) =>
-      prev
-        ? {
-            ...prev,
-            client: { ...prev.client, phone: newPhone },
-          }
-        : prev
-    );
-  };
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   return (
-    <LoyaltyContext.Provider value={{ loyalty, loading, phone, setPhone }}>
+    <LoyaltyContext.Provider
+      value={{
+        loyalty,
+        loading,
+        error,
+        refresh,
+        updatePhone,
+      }}
+    >
       {children}
     </LoyaltyContext.Provider>
   );
@@ -80,7 +92,7 @@ export const LoyaltyProvider: React.FC<{ children: ReactNode }> = ({
 export const useLoyalty = (): LoyaltyContextValue => {
   const ctx = useContext(LoyaltyContext);
   if (!ctx) {
-    throw new Error("useLoyalty must be used inside LoyaltyProvider");
+    throw new Error("useLoyalty must be used within LoyaltyProvider");
   }
   return ctx;
 };
