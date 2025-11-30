@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useState } from "react";
-
-import { HomeScreen } from "./pages/HomeScreen";
+// стало
+import HomeScreen from "./pages/HomeScreen";
 import { BarbersScreen } from "./pages/BarbersScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 
